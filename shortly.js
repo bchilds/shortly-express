@@ -14,6 +14,23 @@ var session = require('express-session');
 
 var app = express();
 
+app.use(session ({
+  secret: 'teapot',
+  resave: true,
+  cookie: {},
+  isLoggedIn: false
+}));
+
+// middleware to check login for session
+var restrict = (req, res, next) => {
+  if (req.session.isLoggedIn) {
+    next();
+  } else {
+    req.session.error = 'Not logged in!';
+    res.redirect('/login');
+  }
+};
+
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 app.use(partials());
@@ -24,17 +41,17 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
 
-app.get('/', 
+app.get('/', restrict,
 function(req, res) {
   res.render('index');
 });
 
-app.get('/create', 
+app.get('/create', restrict,
 function(req, res) {
   res.render('index');
 });
 
-app.get('/links', 
+app.get('/links', restrict,
 function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.status(200).send(links.models);
@@ -77,7 +94,7 @@ function(req, res) {
 // Write your authentication routes here
 /************************************************************/
 
-app.get('/users',
+app.get('/users', restrict,
 function(req, res) {
   Users.reset().fetch().then(function(users) {
     res.status(200).send(users.models);
@@ -92,12 +109,34 @@ function(req, res) {
 app.post('/login', function(req, res) {
   //take in req data as req.body
   //see if username is in db
+  new User({ username: req.body.username }).fetch().then( (found) => {
     //if it is not, redirect to signup
+    if (!found) {
+      res.redirect('/signup');  
+    } else {
     //if it is, check if the password matches stored hash
+      var hashedPassword = util.passwordHash(req.body.password);
       //if it matches, 
+      if (hashedPassword === found.attributes.passwordHash) {
         //redirect to index and start session
+        // console.log('MATCH!');
+        req.session.isLoggedIn = true;
+        res.redirect('/');
+        
+        // still do session stuff
+        
+        
       //if it does not
+      } else {
         //send 418 because they are a teapot and sent incorrect pw
+        // console.log('NO MATCH :(');
+        console.log('They are a teapot for submitting an incorrect password');
+        res.sendStatus(418);
+        
+      }
+      
+    }
+  });
   
 });
 
@@ -147,7 +186,7 @@ app.post('/signup', function(req, res) {
 // If the short-code doesn't exist, send the user to '/'
 /************************************************************/
 
-app.get('/*', function(req, res) {
+app.get('/*', restrict, function(req, res) {
   new Link({ code: req.params[0] }).fetch().then(function(link) {
     if (!link) {
       res.redirect('/');
