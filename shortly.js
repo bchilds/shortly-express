@@ -22,7 +22,7 @@ app.use(session ({
 }));
 
 // middleware to check login for session
-var restrict = (req, res, next) => {
+var checkUser = (req, res, next) => {
   if (req.session.isLoggedIn) {
     next();
   } else {
@@ -41,17 +41,17 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
 
-app.get('/', restrict,
+app.get('/', checkUser,
 function(req, res) {
   res.render('index');
 });
 
-app.get('/create', restrict,
+app.get('/create', checkUser,
 function(req, res) {
   res.render('index');
 });
 
-app.get('/links', restrict,
+app.get('/links', checkUser,
 function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.status(200).send(links.models);
@@ -94,7 +94,7 @@ function(req, res) {
 // Write your authentication routes here
 /************************************************************/
 
-app.get('/users', restrict,
+app.get('/users', checkUser,
 function(req, res) {
   Users.reset().fetch().then(function(users) {
     res.status(200).send(users.models);
@@ -180,13 +180,21 @@ app.post('/signup', function(req, res) {
         
 });
 
+app.get('/logout', 
+function(req, res) {
+  req.session.destroy( () => {
+    res.redirect('/login');
+  });
+});
+
+
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail
 // assume the route is a short code and try and handle it here.
 // If the short-code doesn't exist, send the user to '/'
 /************************************************************/
 
-app.get('/*', restrict, function(req, res) {
+app.get('/*', function(req, res) {
   new Link({ code: req.params[0] }).fetch().then(function(link) {
     if (!link) {
       res.redirect('/');
