@@ -10,6 +10,7 @@ var User = require('./app/models/user');
 var Links = require('./app/collections/links');
 var Link = require('./app/models/link');
 var Click = require('./app/models/click');
+var session = require('express-session');
 
 var app = express();
 
@@ -76,12 +77,27 @@ function(req, res) {
 // Write your authentication routes here
 /************************************************************/
 
+app.get('/users',
+function(req, res) {
+  Users.reset().fetch().then(function(users) {
+    res.status(200).send(users.models);
+  });
+});
+
 app.get('/login', 
 function(req, res) {
   res.render('login');
 });
 
 app.post('/login', function(req, res) {
+  //take in req data as req.body
+  //see if username is in db
+    //if it is not, redirect to signup
+    //if it is, check if the password matches stored hash
+      //if it matches, 
+        //redirect to index and start session
+      //if it does not
+        //send 418 because they are a teapot and sent incorrect pw
   
 });
 
@@ -90,16 +106,37 @@ function(req, res) {
   res.render('signup');
 });
 
+
+
 app.post('/signup', function(req, res) {
   //take in req data
+  //console.log(req.body);
   //we see if username is in db
-    //if yes, return error
-    //if not, 
-      //insert username and (hashed) password into db
-      //return success
-      //login for them
-        //create a new session
-        //redirect back to index
+  //{ username: 'bchilds', password: '12345' }
+  new User({ username: req.body.username }).fetch().then( (found) => {
+    
+    if (found) {
+      //if yes, return error
+      console.log('They are a teapot for submitting a user who exists');
+      res.sendStatus(418);
+      
+    } else {
+      //if not, 
+      Users.create({
+        username: req.body.username,
+        passwordHash: req.body.password,
+      }).then((newUser)=>{ res.status(200).send(newUser); });
+      //TODO: redirect to login
+        //insert username and (hashed) password into db
+        //return success
+        //login for them
+          //TODO: create a new session
+          //TODO: redirect back to index
+      
+    }
+    
+  } );
+  
         
         
 });
