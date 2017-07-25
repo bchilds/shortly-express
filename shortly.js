@@ -12,6 +12,37 @@ var Links = require('./app/collections/links');
 var Link = require('./app/models/link');
 var Click = require('./app/models/click');
 var session = require('express-session');
+var passport = require('passport');
+var GitHubStrategy = require('passport-github2').Strategy;
+
+var GITHUB_CLIENT_ID = '2c9369c0f60c637d64fb';
+var GITHUB_CLIENT_SECRET = '90fc67d652f89f447e1790534bae33bdbf7fc369';
+
+passport.serializeUser( (user, done) => {
+  done(null, user);
+});
+
+passport.deserializeUser( (user, done) => {
+  done(null, user);
+});
+
+var userName; 
+var userImage;
+
+passport.use(new GitHubStrategy({
+  clientID: GITHUB_CLIENT_ID,
+  clientSecret: GITHUB_CLIENT_SECRET,
+  callbackURL: 'http://localhost:4568/auth/callback'
+},
+  function(accessToken, refreshToken, profile, done) {
+    //console.log(profile);
+    userName = profile.name;
+    userImage = profile.avatar_url;
+    process.nextTick( () => {
+      return done(null, profile);
+    });
+  }
+));
 
 var app = express();
 
@@ -22,14 +53,28 @@ app.use(session ({
   isLoggedIn: false
 }));
 
+app.use(passport.initialize());
+app.use(passport.session());
+
+
 // middleware to check login for session
+////////////// OLD CHECK USER SOLUTION (CLIENT) ////////////
+// var checkUser = (req, res, next) => {
+//   if (req.session.isLoggedIn) {
+//     next();
+//   } else {
+//     req.session.error = 'Not logged in!';
+//     res.redirect('/login');
+//   }
+// };
+
 var checkUser = (req, res, next) => {
-  if (req.session.isLoggedIn) {
-    next();
-  } else {
-    req.session.error = 'Not logged in!';
-    res.redirect('/login');
+  if (req.session.isLoggedIn || req.isAuthenticated()) {
+    return next();
   }
+
+  res.redirect('/login');
+
 };
 
 app.set('views', __dirname + '/views');
@@ -99,6 +144,36 @@ app.get('/login', function(req, res) {
   res.render('login');
 });
 
+///////////////////// NEW LOGIN (O AUTH) /////////////////////////
+app.get('/auth', 
+  passport.authenticate('github', {
+    scope: ['user:email'],
+    successFlash: true, 
+  }),
+  (req, res) => {}
+);
+
+app.get('/auth/callback', 
+  passport.authenticate('github', {failureRedirect: '/login'}),
+  (req, res) => {
+    res.redirect('/');
+  }
+);
+
+
+////////////////////// NEW LOGOUT (O AUTH) //////////////////////
+app.get('/logout', (req, res) => {
+  req.session.destroy( () => {
+    req.logout();
+    res.redirect('/login');
+  });
+});
+
+/////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////
+
+/////////// OLD SOLUTION (CLIENT AUTH) ///////////////////////
 app.post('/login', function(req, res) {
   //take in req data as req.body
   //see if username is in db
@@ -163,12 +238,15 @@ app.post('/signup', function(req, res) {
     }
   } );
 });
+/////////////////////////////////////////////////////////////////
 
-app.get('/logout', function(req, res) {
-  req.session.destroy( () => {
-    res.redirect('/login');
-  });
-});
+
+////////////////////// ORIGINAL LOGOUT //////////////////////////
+// app.get('/logout', function(req, res) {
+//   req.session.destroy( () => {
+//     res.redirect('/login');
+//   });
+// });
 
 
 /************************************************************/
