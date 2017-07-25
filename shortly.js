@@ -111,7 +111,7 @@ app.post('/login', function(req, res) {
   new User({ username: req.body.username }).fetch().then( (found) => {
     //if it is not, redirect to signup
     if (!found) {
-      res.redirect('/signup');  
+      res.redirect('/login');  
     } else {
     //if it is, check if the password matches stored hash
       //if it matches, 
