@@ -42,25 +42,21 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
 
-app.get('/', checkUser,
-function(req, res) {
+app.get('/', checkUser, function(req, res) {
   res.render('index');
 });
 
-app.get('/create', checkUser,
-function(req, res) {
+app.get('/create', checkUser, function(req, res) {
   res.render('index');
 });
 
-app.get('/links', checkUser,
-function(req, res) {
+app.get('/links', checkUser, function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.status(200).send(links.models);
   });
 });
 
-app.post('/links', 
-function(req, res) {
+app.post('/links', function(req, res) {
   var uri = req.body.url;
 
   if (!util.isValidUrl(uri)) {
@@ -93,15 +89,13 @@ function(req, res) {
 // Write your authentication routes here
 /************************************************************/
 
-app.get('/users', checkUser,
-function(req, res) {
+app.get('/users', checkUser, function(req, res) {
   Users.reset().fetch().then(function(users) {
     res.status(200).send(users.models);
   });
 });
 
-app.get('/login', 
-function(req, res) {
+app.get('/login', function(req, res) {
   res.render('login');
 });
 
@@ -133,8 +127,7 @@ app.post('/login', function(req, res) {
   });
 });
 
-app.get('/signup', 
-function(req, res) {
+app.get('/signup', function(req, res) {
   res.render('signup');
 });
 
@@ -171,8 +164,7 @@ app.post('/signup', function(req, res) {
   } );
 });
 
-app.get('/logout', 
-function(req, res) {
+app.get('/logout', function(req, res) {
   req.session.destroy( () => {
     res.redirect('/login');
   });
