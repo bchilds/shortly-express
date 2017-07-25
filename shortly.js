@@ -87,7 +87,11 @@ app.use(express.static(__dirname + '/public'));
 
 
 app.get('/', checkUser, function(req, res) {
-  res.render('index', {theimagewewant: req.user._json.avatar_url});
+  if (req.user) {
+    res.render('index', {theimagewewant: req.user._json.avatar_url});
+  } else {
+    res.render('index', {theimagewewant: undefined});
+  }
 });
 
 app.get('/create', checkUser, function(req, res) {
