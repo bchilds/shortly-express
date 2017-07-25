@@ -18,13 +18,11 @@ var User = db.Model.extend({
   hashPassword: (model, attrs, options) => {
     return new Promise(function(resolve, reject) {
       bcrypt.hash(attrs.password, null, null, function(err, hash) {
-        // console.log('THIS OUR HASH PW??', hash);
         if (err) { 
           reject (err); 
         }
         model.set('password', hash);
         resolve(hash);
-        // console.log('MODEL??? ', model);
       });
     });
   } 

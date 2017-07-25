@@ -32,12 +32,11 @@ var userImage;
 passport.use(new GitHubStrategy({
   clientID: GITHUB_CLIENT_ID,
   clientSecret: GITHUB_CLIENT_SECRET,
-  callbackURL: 'http://localhost:4568/auth/callback'
+  callbackURL: 'http://localhost:4568/auth/callback',
+  passRequestToCallback: true,
 },
-  function(accessToken, refreshToken, profile, done) {
-    //console.log(profile);
-    userName = profile.name;
-    userImage = profile.avatar_url;
+  function(req, accessToken, refreshToken, profile, done) {
+    // console.log(profile._json.avatar_url);
     process.nextTick( () => {
       return done(null, profile);
     });
@@ -88,7 +87,7 @@ app.use(express.static(__dirname + '/public'));
 
 
 app.get('/', checkUser, function(req, res) {
-  res.render('index');
+  res.render('index', {theimagewewant: req.user._json.avatar_url});
 });
 
 app.get('/create', checkUser, function(req, res) {
@@ -156,6 +155,7 @@ app.get('/auth',
 app.get('/auth/callback', 
   passport.authenticate('github', {failureRedirect: '/login'}),
   (req, res) => {
+    // console.log(req.user._json.avatar_url);
     res.redirect('/');
   }
 );

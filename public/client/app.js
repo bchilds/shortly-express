@@ -6,10 +6,14 @@ window.Shortly = Backbone.View.extend({
     'click li a.create': 'renderCreateView'
   },
 
-  initialize: function() {
+  initialize: function(options) {
+    
     console.log( 'Shortly is running' );
     $('body').append(this.render().el);
-
+    if (options.property) {
+      $('#profileImg').attr('src', options.property);
+    }
+    console.log(options);
     this.router = new Shortly.Router({ el: this.$el.find('#container') });
     this.router.on('route', this.updateNav, this);
 
@@ -19,6 +23,12 @@ window.Shortly = Backbone.View.extend({
   render: function() {
     this.$el.html( this.template() );
     return this;
+  },
+
+  renderImage: function(userImage) {
+    $('#profileImg').attr('src', userImage);
+    
+
   },
 
   renderIndexView: function(e) {

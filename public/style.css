@@ -15,7 +15,20 @@ h1 {
   margin-bottom: 10px;
 }
 
+.profileBlock {
+  display: inline-block;
+  float:right;
+  margin-right: 5%
+}
+
+#profileImg {
+  height: 100px;
+  width: 100px;
+  
+}
+
 .navigation {
+  display: inline-block;
   width: 100%;
   height: 40px;
   background-color: #eee;
@@ -35,6 +48,7 @@ h1 {
 
 .navigation .logout {
   float: right;
+  margin-right: 4.5%;
 }
 
 .navigation li a , .logout {
