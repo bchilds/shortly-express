@@ -2,6 +2,7 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
+var bcrypt = require('bcrypt-nodejs');
 
 
 var db = require('./app/config');
@@ -63,7 +64,6 @@ function(req, res) {
   var uri = req.body.url;
 
   if (!util.isValidUrl(uri)) {
-    console.log('Not a valid url: ', uri);
     return res.sendStatus(404);
   }
 
@@ -73,7 +73,6 @@ function(req, res) {
     } else {
       util.getUrlTitle(uri, function(err, title) {
         if (err) {
-          console.log('Error reading URL heading: ', err);
           return res.sendStatus(404);
         }
 
@@ -115,29 +114,23 @@ app.post('/login', function(req, res) {
       res.redirect('/signup');  
     } else {
     //if it is, check if the password matches stored hash
-      var hashedPassword = util.passwordHash(req.body.password);
       //if it matches, 
-      if (hashedPassword === found.attributes.passwordHash) {
+      var passed = util.passwordCheck(req.body.password, found.attributes.password);
+      
+      if (passed) {
         //redirect to index and start session
         // console.log('MATCH!');
         req.session.isLoggedIn = true;
         res.redirect('/');
-        
-        // still do session stuff
-        
-        
       //if it does not
       } else {
         //send 418 because they are a teapot and sent incorrect pw
         // console.log('NO MATCH :(');
         console.log('They are a teapot for submitting an incorrect password');
         res.sendStatus(418);
-        
       }
-      
     }
   });
-  
 });
 
 app.get('/signup', 
@@ -153,18 +146,20 @@ app.post('/signup', function(req, res) {
   //we see if username is in db
   //{ username: 'bchilds', password: '12345' }
   new User({ username: req.body.username }).fetch().then( (found) => {
-    
     if (found) {
       //if yes, return error
       console.log('They are a teapot for submitting a user who exists');
       res.sendStatus(418);
-      
     } else {
       //if not, 
       Users.create({
         username: req.body.username,
-        passwordHash: req.body.password,
-      }).then((newUser)=>{ res.status(200).send(newUser); });
+        password: req.body.password,
+      }).then((newUser)=>{ 
+        req.session.isLoggedIn = true;
+        res.redirect('/');
+        //res.sendStatus(200);//.send(newUser); 
+      });
       //TODO: redirect to login
         //insert username and (hashed) password into db
         //return success
@@ -173,11 +168,7 @@ app.post('/signup', function(req, res) {
           //TODO: redirect back to index
       
     }
-    
   } );
-  
-        
-        
 });
 
 app.get('/logout', 
